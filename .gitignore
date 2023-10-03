@@ -125,3 +125,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+src/sets/*
+!src/sets/_example.json
+!src/sets/_schema.json
+
+src/config.json

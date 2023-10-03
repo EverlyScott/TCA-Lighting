@@ -1,0 +1,20 @@
+{
+  "$schema": "./_schema.json",
+  "name": "Example",
+  "order": 0,
+  "initialBPM": 120,
+  "program": [
+    {
+      "rgb": [255, 0, 0],
+      "length": 1
+    },
+    {
+      "rgb": [0, 255, 0],
+      "length": 1
+    },
+    {
+      "rgb": [0, 0, 255],
+      "length": 1
+    }
+  ]
+}

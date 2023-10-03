@@ -2,11 +2,19 @@
   "name": "tca-lighting",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/main.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npx ts-node ."
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "johnny-five": "^2.1.0",
+    "musicxml-interfaces": "^0.0.21",
+    "ts-node": "^10.9.1"
+  },
+  "devDependencies": {
+    "@types/johnny-five": "^2.1.4"
+  }
 }
