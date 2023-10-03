@@ -1,6 +1,8 @@
 import init from "./init";
-import startLights from "./lightController";
+import initializeLights from "./lightController";
+import initializeExpress from "./web";
 
 init().then(() => {
-  startLights();
+  initializeExpress();
+  initializeLights();
 });

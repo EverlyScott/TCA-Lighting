@@ -1,4 +1,11 @@
 {
-  // You will only need to specify the port if you're having issues or want greater reliability
-  "port": null
+  "webUi": {
+    "enabled": true,
+    "port": 3000
+  },
+  "arduino": {
+    "enabled": true,
+    // You will only need to specify the port if you're having issues or want greater reliability
+    "comPort": null
+  }
 }

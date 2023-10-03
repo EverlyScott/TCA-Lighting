@@ -10,11 +10,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
     "johnny-five": "^2.1.0",
     "musicxml-interfaces": "^0.0.21",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
-    "@types/johnny-five": "^2.1.4"
+    "@types/express": "^4.17.18",
+    "@types/johnny-five": "^2.1.4",
+    "@types/node": "^20.8.2",
+    "@types/ws": "^8.5.6"
   }
 }

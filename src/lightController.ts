@@ -1,7 +1,30 @@
 import { Led } from "johnny-five";
 import GLOBALS from "./globals";
+import config from "./config.json";
 
-const startLights = () => {
+const initializeLights = () => {
+  if (!config.arduino.enabled) {
+    // Still send websockets for light if arduino is disabled
+    (async () => {
+      while (true) {
+        for (let i = 0; i < GLOBALS.SET.program.length; i++) {
+          const item = GLOBALS.SET.program[i];
+
+          GLOBALS.WSS.clients.forEach((client) => {
+            client.send(
+              JSON.stringify({
+                op: "light-change",
+                data: item.rgb,
+              })
+            );
+          });
+
+          await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
+        }
+      }
+    })();
+  }
+
   GLOBALS.BOARD.on("ready", async () => {
     console.log("ready");
 
@@ -21,6 +44,15 @@ const startLights = () => {
         greenLed.brightness(item.rgb[1]);
         blueLed.brightness(item.rgb[2]);
 
+        GLOBALS.WSS.clients.forEach((client) => {
+          client.send(
+            JSON.stringify({
+              op: "light-change",
+              data: item.rgb,
+            })
+          );
+        });
+
         await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
       }
     }
@@ -33,4 +65,4 @@ const sleep = (ms: number) => {
   });
 };
 
-export default startLights;
+export default initializeLights;
