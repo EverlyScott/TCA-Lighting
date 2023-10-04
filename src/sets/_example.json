@@ -1,6 +1,7 @@
 {
   "$schema": "./_schema.json",
   "name": "Example",
+  "id": "example",
   "order": 0,
   "initialBPM": 120,
   "program": [

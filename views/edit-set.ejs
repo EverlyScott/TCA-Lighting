@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Edit Set | TCA Lighting System</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <h1>Editing <%= set.name %></h1>
+    <p>Name<br /><input type="text" value="<%= set.name %>" /></p>
+    <p>ID<br /><input type="text" value="<%= set.id %>" style="font-family: monospace" /></p>
+    <p>Initial BPM<br /><input type="number" min="0" value="<%= set.initialBPM %>" /></p>
+    <div style="display: flex; background-color: rgba(0, 0, 0, 0.2)">
+      <div id="programItems" style="flex-grow: 1">
+        <% for (let i = 0; i < set.program.length; i++) { %>
+        <div class="programItem" style="border: 2px solid #000000">
+          <p>Note length<br /><input id="length" type="number" value="<%= set.program[i].length %>" /></p>
+          <p>
+            <input data-index="<%= i %>" id="color" type="color" value="<%= "#" +
+            set.program[i].rgb[0].toString(16).padStart(2, "0") + set.program[i].rgb[1].toString(16).padStart(2, "0") +
+            set.program[i].rgb[2].toString(16).padStart(2, "0") %>" />
+          </p>
+        </div>
+        <% } %>
+      </div>
+      <div style="width: 50%; height: 100vh; position: sticky; bottom: 0; right: 0">
+        <img id="notation" width="100%" />
+      </div>
+    </div>
+    <p id="form-error" style="display: none"></p>
+    <button>Cancel</button>
+    <button>Edit</button>
+  </body>
+
+  <script>
+    const set = JSON.parse(`<%- JSON.stringify(set) %>`);
+
+    document.getElementById("notation").src = `/api/generate-notation?program=${encodeURIComponent(
+      JSON.stringify(set.program)
+    )}`;
+
+    const programItems = document.getElementById("programItems").querySelectorAll(".programItem");
+
+    for (let i = 0; i < programItems.length; i++) {
+      const item = programItems[i];
+
+      const length = item.getElementById("length");
+      const color = item.getElementById("color");
+
+      length.addEventListener("change", (evt) => {
+        set[evt.target];
+      });
+    }
+  </script>
+</html>

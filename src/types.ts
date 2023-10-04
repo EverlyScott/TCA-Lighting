@@ -1,5 +1,6 @@
 export interface Set {
   name: string;
+  id: string;
   order: number;
   initialBPM: number;
   program: Program;
