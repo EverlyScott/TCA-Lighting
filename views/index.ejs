@@ -9,8 +9,12 @@
   <body>
     <h1>Current status:</h1>
     <div style="width: 100px; height: 100px"><%- include("./partials/currentState.ejs") %></div>
-    <h1>BPM</h1>
+    <h2>Current Set</h2>
+    <p><%= GLOBALS.SET.name %></p>
+    <button>Previous</button><button>Next</button>
+    <h2>Current BPM</h2>
     <p><%= GLOBALS.BPM %> BPM</p>
+    <button>Tap BPM</button>
     <h1>Sets</h1>
     <ul>
       <% for (let i = 0; i < GLOBALS.SETS.length; i++) { %>
