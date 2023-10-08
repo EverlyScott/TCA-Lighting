@@ -27,9 +27,20 @@ const init = async () => {
 
   GLOBALS.SETS = setsList;
 
-  if (!lowestOrderSet) throw new Error("Failed to initialize! Could not find a set.");
+  if (lowestOrderSet) {
+    console.log(`Setting ${lowestOrderSet.name} as initial set`);
+  } else {
+    console.log("No sets found! Using built-in set.");
 
-  console.log(`Setting ${lowestOrderSet.name} as initial set`);
+    lowestOrderSet = {
+      name: "No Sets Found",
+      id: "no-sets",
+      initialBPM: -1,
+      order: 0,
+      program: [],
+    };
+  }
+
   GLOBALS.SET = lowestOrderSet;
   GLOBALS.BPM = lowestOrderSet.initialBPM;
 
@@ -37,6 +48,7 @@ const init = async () => {
     console.log(`Initializing arduino on com port ${config.arduino.comPort}`);
     GLOBALS.BOARD = new Board({ port: config.arduino.comPort });
   } else {
+    console.log("Arduino disabled; using fake object.");
     GLOBALS.BOARD = {
       on: () => {},
     } as any as Board;

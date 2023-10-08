@@ -131,3 +131,5 @@ src/sets/*
 !src/sets/_schema.json
 
 src/config.json
+
+build

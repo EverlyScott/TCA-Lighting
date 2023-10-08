@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Create Set | TCA Lighting System</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <h1>Create Set</h1>
+    <p>Name<br /><input id="name" type="text" /></p>
+    <p>ID<br /><input id="id" type="text" style="font-family: monospace" /></p>
+    <p>Initial BPM<br /><input id="initial-bpm" type="text" /></p>
+    <button id="create">Create</button>
+
+    <script>
+      document.getElementById("create").addEventListener("click", async () => {
+        const name = document.getElementById("name").value;
+        const id = document.getElementById("id").value;
+        const initialBPM = document.getElementById("initial-bpm").value;
+
+        const res = await fetch(`/api/set/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, id, initialBPM }),
+        }).then((res) => res.json());
+
+        if (res.success === true) {
+          location.href = `/sets/${id}`;
+        } else {
+          alert(`An error occurred: ${res.error}`);
+        }
+      });
+    </script>
+  </body>
+</html>

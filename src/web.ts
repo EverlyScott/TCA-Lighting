@@ -1,324 +1,91 @@
 import express from "express";
+import Next from "next";
 import fs from "fs/promises";
-import { createCanvas, extractImage } from "node-vexflow";
-import {
-  Barline,
-  BarlineType,
-  Beam,
-  Dot,
-  ElementStyle,
-  Flow,
-  Formatter,
-  Note,
-  Stave,
-  StaveNote,
-  StaveTie,
-  Stem,
-  StemmableNote,
-  TickContext,
-  Vex,
-  Voice,
-} from "vexflow";
-import { Fraction } from "vexflow";
+import { existsSync } from "fs";
+import bodyParser from "body-parser";
 import config from "./config.json";
 import GLOBALS from "./globals";
 import { WebSocketServer } from "ws";
-import { Program, Set } from "./types";
+import { Set } from "./types";
+import reloadSets from "./api/reload-sets";
+import reloadLights from "./api/restart-lights";
+import generateNotation from "./api/generate-notation";
+import editSet from "./api/edit-set";
+import createSet from "./api/create-set";
 
 const initializeExpress = () => {
   if (config.webUi.enabled) {
-    const app = express();
+    const next = Next({ dev: process.env.NODE_ENV === "development", customServer: true, dir: "next" });
 
-    app.set("view engine", "ejs");
+    next
+      .prepare()
+      .then(() => {
+        const app = express();
+        const handle = next.getRequestHandler();
 
-    app.use(express.static("public"));
-
-    app.post("/api/reload-sets", async (req, res) => {
-      console.log("Reloading sets...");
-
-      const sets = await fs.readdir("src/sets");
-
-      let setsList: Set[] = [];
-
-      for (let i = 0; i < sets.length; i++) {
-        if (sets[i].substring(0, 1) !== "_") {
-          const set: Set = JSON.parse(await fs.readFile(`src/sets/${sets[i]}`, "utf-8"));
-          setsList.push(set);
-        }
-      }
-
-      GLOBALS.SETS = setsList;
-
-      res.status(200);
-      res.end();
-    });
-
-    app.get("/api/generate-notation", async (req, res) => {
-      try {
-        const noteConversions = {
-          [(1 / 128) * 4]: "128",
-          [(1 / 128 + 1 / 256) * 4]: "128d",
-          [(1 / 64) * 4]: "64",
-          [(1 / 64 + 1 / 128) * 4]: "64d",
-          [(1 / 32) * 4]: "32",
-          [(1 / 32 + 1 / 64) * 4]: "32d",
-          [(1 / 16) * 4]: "16",
-          [(1 / 16.0 + 1 / 32) * 4]: "16d",
-          [(1 / 8) * 4]: "8",
-          [(1 / 8 + 1 / 16.0) * 4]: "8d",
-          [(1 / 4) * 4]: "4",
-          [(1 / 4 + 1 / 8) * 4]: "4d",
-          [(1 / 2) * 4]: "2",
-          [(1 / 2 + 1 / 4) * 4]: "2d",
-          [1 * 4]: "1",
-        };
-
-        const generateNote = (length: number, color: [number, number, number]) => {
-          if (length > 0) {
-            const noteType = noteConversions[length];
-
-            if (noteType === undefined) {
-              let largestLength = 0;
-              const possibleLengths = Object.getOwnPropertyNames(noteConversions);
-
-              for (let i = 0; i < possibleLengths.length; i++) {
-                const possibleLargestLength = parseFloat(possibleLengths[i]);
-
-                if (possibleLargestLength > largestLength && possibleLargestLength < length) {
-                  largestLength = possibleLargestLength;
-                }
-              }
-
-              const firstNote = generateNote(largestLength, color);
-              const secondNote = generateNote(length - largestLength, color);
-
-              return [...firstNote, ...secondNote];
-            }
-
-            const note = new StaveNote({
-              keys: ["b/4"],
-              duration: noteType + (color[0] === 0 && color[1] === 0 && color[2] === 0 ? "r" : ""),
-              dots: noteType.includes("d") ? 1 : 0,
-              stem_direction: Stem.DOWN,
-            });
-
-            note.setStyle(generateStyle(color));
-
-            return [noteType.includes("d") ? dotted(note) : note];
-          } else {
-            return [];
-          }
-        };
-
-        const generateStyle = (color: [number, number, number]) => {
-          return {
-            fillStyle: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-            strokeStyle: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-            shadowColor: "#000000",
-            shadowBlur: 1,
-          } as ElementStyle;
-        };
-
-        const dotted = (note: Note) => {
-          Dot.buildAndAttach([note]);
-          return note;
-        };
-
-        const set: Set = JSON.parse(req.query.set as string);
-
-        const program = set.program;
-
-        const canvas = createCanvas();
-
-        const renderer = new Flow.Renderer(canvas, Flow.Renderer.Backends.CANVAS);
-
-        let beats = 0;
-
-        for (let i = 0; i < program.length; i++) {
-          beats += program[i].length;
-        }
-
-        const numberOfSystems = Math.ceil(beats / 4);
-
-        const margin = 200;
-
-        const systemHeight = 400;
-
-        renderer.resize(2000, systemHeight * numberOfSystems);
-
-        const context = renderer.getContext();
-        context.scale(4, 4);
-        context.save();
-        context.fillStyle = "white";
-        context.fillRect(0, 0, 500, (systemHeight * numberOfSystems + margin) / 4);
-        context.restore();
-
-        let drawnBeats = 0;
-
-        let ties: StaveTie[] = [];
-
-        const notes = program.flatMap((item) => {
-          if (drawnBeats < 4 && drawnBeats + item.length > 4) {
-            const firstNoteLength = 4 - drawnBeats;
-
-            const firstNote = generateNote(firstNoteLength, item.rgb);
-
-            const secondNoteLength = item.length - firstNoteLength;
-
-            const secondNote = generateNote(secondNoteLength, item.rgb);
-
-            drawnBeats = item.length - (4 - drawnBeats);
-
-            ties.push(
-              new StaveTie({
-                first_note: firstNote[0],
-                first_indices: [0],
-                last_note: null, //secondNote[secondNote.length - 1],
-                last_indices: [0],
-              }).setStyle(generateStyle(item.rgb))
-            );
-
-            ties.push(
-              new StaveTie({
-                first_note: null,
-                first_indices: [0],
-                last_note: secondNote[secondNote.length - 1],
-                last_indices: [0],
-              }).setStyle(generateStyle(item.rgb))
-            );
-
-            return [...firstNote, new Vex.Flow.BarNote(), ...secondNote];
-          }
-
-          drawnBeats += item.length;
-
-          const note = generateNote(item.length, item.rgb);
-
-          if (drawnBeats >= 4) {
-            drawnBeats = 0;
-            return [...note, new Vex.Flow.BarNote()];
-          } else {
-            return [...note];
-          }
+        app.use((req, res, next) => {
+          res.setHeader("X-Powered-By", "TCA");
+          next();
         });
 
-        if (drawnBeats !== 4) {
-          const rest = generateNote(4 - drawnBeats, [0, 0, 0]);
+        app.use(bodyParser.json());
 
-          notes.push(...rest);
-        }
+        app.post("/api/reload-sets", reloadSets);
 
-        let staves: Stave[] = [];
-        let voices: Voice[] = [];
+        app.post("/api/restart-lights", reloadLights);
 
-        let currentStaveNotes: StaveNote[] = [];
-        for (let i = 0; i < notes.length; i++) {
-          const note = notes[i];
+        app.get("/api/generate-notation", generateNotation);
 
-          if (note instanceof StaveNote) {
-            currentStaveNotes.push(note);
-            console.log(i, "a");
-          } else if (note instanceof Vex.Flow.BarNote) {
-            console.log(i, "b");
-            console.log(currentStaveNotes.length);
-            const stave = new Flow.Stave(10, 100 * staves.length, 480);
-            stave.addClef("percussion");
-            if (staves.length === 0) {
-              stave.addTimeSignature("4/4");
-              stave.setText(set.name, Flow.StaveModifier.Position.ABOVE);
-              // stave.setTempo({ bpm: set.initialBPM }, Flow.StaveTempo.Position.BEGIN);
-            }
-            staves.push(stave);
+        app.patch("/api/set/:setId", editSet);
 
-            const voice = new Voice({ num_beats: 4, beat_value: 4, resolution: Vex.Flow.RESOLUTION });
-            voice.setStrict(false);
-            voice.addTickables(currentStaveNotes);
-            voices.push(voice);
+        app.post("/api/set/:setId", createSet);
 
-            currentStaveNotes = [];
-          }
-        }
-
-        if (currentStaveNotes.length > 0) {
-          const stave = new Flow.Stave(10, 100 * staves.length, 480);
-          stave.addClef("percussion");
-          if (staves.length === 0) {
-            stave.addTimeSignature("4/4");
-            stave.setText(set.name, Flow.StaveModifier.Position.ABOVE);
-            // stave.setTempo({ bpm: set.initialBPM }, Flow.StaveTempo.Position.BEGIN);
-          }
-          staves.push(stave);
-
-          const voice = new Voice({ num_beats: 4, beat_value: 4, resolution: Vex.Flow.RESOLUTION });
-          voice.setStrict(false);
-          voice.addTickables(currentStaveNotes);
-          voices.push(voice);
-
-          currentStaveNotes = [];
-        }
-
-        staves[staves.length - 1].setEndBarType(BarlineType.REPEAT_END);
-
-        for (let i = 0; i < staves.length; i++) {
-          staves[i].setContext(context).draw();
-        }
-
-        const formatter = new Formatter();
-        formatter.joinVoices(voices);
-        formatter.format(voices, 350, { context, align_rests: true });
-
-        for (let i = 0; i < voices.length; i++) {
-          voices[i].draw(context, staves[i]);
-        }
-
-        ties.forEach((tie, i) => {
-          tie.setContext(context).draw();
+        app.get("*", (req, res) => {
+          return handle(req, res);
         });
 
-        res.setHeader("Content-Type", "image/png");
-        res.send(extractImage(canvas));
-      } catch (err) {
+        // app.get("/", (req, res) => {
+        //   res.render("index", { GLOBALS });
+        // });
+
+        // app.get("/sets/create", (req, res) => {
+        //   res.render("create-set");
+        // });
+
+        // app.get("/sets/:setId", (req, res, next) => {
+        //   const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
+
+        //   if (set) {
+        //     res.render("edit-set", { set });
+        //   } else {
+        //     next();
+        //   }
+        // });
+
+        app.listen(config.webUi.port, () => {
+          console.log(`Web UI listening on port ${config.webUi.port}`);
+        });
+
+        GLOBALS.WSS = new WebSocketServer({ port: config.webUi.webSocketPort }, () => {
+          console.log(`WebSocket Server listening on port ${config.webUi.webSocketPort}`);
+        });
+      })
+      .catch((err) => {
+        console.log("Failed to initialize web server! Starting backup.");
         console.error(err);
-        res.setHeader("Content-Type", "image/svg+xml");
-        res.send(
-          `<svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"><style>.text { font: bold 10px arial; fill: #ff0000; } .error { font: 5px arial; fill: #ff0000; }</style><text x="0" y="10" class="text">An error has occurred rendering notation!</text><text x="0" y="20" class="error">${err.toString()}</text></svg>`
-        );
-      }
-    });
 
-    app.post("/api/set/:setId", async (req, res) => {
-      const newSet: Set = JSON.parse(req.body);
+        // spin up basic express server so the user knows an error occurred
+        const app = express();
 
-      console.log(newSet);
+        app.get("*", (req, res) => {
+          res.setHeader("Content-Type", "text/html");
+          res.send(`<h1 style="color: #ff0000">Failed to initialize web server!</h1>`);
+        });
 
-      res.send({ success: true });
-    });
-
-    app.get("/", (req, res) => {
-      res.render("index", { GLOBALS });
-    });
-
-    app.get("/sets/create", (req, res) => {
-      res.render("create-set");
-    });
-
-    app.get("/sets/:setId", (req, res, next) => {
-      const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
-
-      if (set) {
-        res.render("edit-set", { set });
-      } else {
-        next();
-      }
-    });
-
-    const server = app.listen(config.webUi.port, () => {
-      console.log(`Web UI listening on port ${config.webUi.port}`);
-    });
-
-    GLOBALS.WSS = new WebSocketServer({ server }, () => {
-      console.log("Initialized WS Server");
-    });
+        app.listen(config.webUi.port, () => {
+          console.log(`Web UI listening on port ${config.webUi.port}`);
+        });
+      });
   }
 };
 

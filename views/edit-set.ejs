@@ -31,6 +31,10 @@
     </style>
   </head>
   <body>
+    <span id="programItemTemplate" style="display: none">
+      <%- include("partials/programItem", { set: { program: [{ rgb: [0, 0, 0], length: 1 }] }, i: 0 }) %>
+    </span>
+
     <h1>Editing <span id="title-h1"><%= set.name %></span></h1>
     <div class="changeflexonmobile" style="display: flex">
       <div style="flex: 1">
@@ -49,26 +53,14 @@
     </div>
 
     <div class="changeflexonmobile" style="display: flex; background-color: rgba(0, 0, 0, 0.2)">
-      <div id="programItems" style="flex-grow: 1">
-        <% for (let i = 0; i < set.program.length; i++) { %>
-        <div class="programItem" style="border: 2px solid #000000; display: flex">
-          <p>
-            Note length<br /><input
-              data-index="<%- i %>"
-              id="length"
-              type="number"
-              min="0"
-              value="<%- set.program[i].length %>"
-            />
-          </p>
-          <p>
-            <br />
-            <input data-index="<%= i %>" id="color" type="color" value="<%= "#" +
-            set.program[i].rgb[0].toString(16).padStart(2, "0") + set.program[i].rgb[1].toString(16).padStart(2, "0") +
-            set.program[i].rgb[2].toString(16).padStart(2, "0") %>" />
-          </p>
+      <div style="flex-grow: 1">
+        <div id="programItems">
+          <% for (let i = 0; i < set.program.length; i++) { %> <%- include("partials/programItem", { set, i }) %> <% }
+          %>
+          <div class="programItem" style="border: 2px solid #000000">
+            <button id="addNote">Add Note</button>
+          </div>
         </div>
-        <% } %>
       </div>
       <div class="notation" style="width: 50%; min-width: 500px; display: flex; flex-direction: column-reverse">
         <img id="notation" width="100%" style="position: sticky; bottom: 0" />
@@ -173,6 +165,19 @@
       });
     };
 
+    document.getElementById("addNote").addEventListener("click", () => {
+      const programItems = document.getElementById("programItems");
+
+      const clone = document.getElementById("programItemTemplate").querySelector(".programItem").cloneNode();
+
+      const index = programItems.querySelectorAll(".programItem").length;
+
+      clone.getElementById("length").setAttribute("data-index", index);
+      clone.getElementById("color").setAttribute("data-index", index);
+
+      programItems.appendChild(clone);
+    });
+
     document.getElementById("cancel").addEventListener("click", () => {
       if (confirm("Are you sure? This will delete any changes made!")) {
         location.href = "/";
@@ -180,12 +185,12 @@
     });
 
     document.getElementById("submit").addEventListener("click", async () => {
-      const res = fetch(`/api/set/${initialId}`, {
-        method: "POST",
+      const res = await fetch(`/api/set/${initialId}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(set),
+        body: JSON.stringify({ set }),
       }).then((res) => res.json());
 
       if (res.success) {
