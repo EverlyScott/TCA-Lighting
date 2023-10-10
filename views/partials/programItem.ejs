@@ -1,0 +1,17 @@
+<div class="programItem" style="border: 2px solid #000000; display: flex">
+  <p>
+    Note length<br /><input
+      data-index="<%- i %>"
+      id="length"
+      type="number"
+      min="0"
+      value="<%- set.program[i].length %>"
+    />
+  </p>
+  <p>
+    <br />
+    <input data-index="<%= i %>" id="color" type="color" value="<%= "#" + set.program[i].rgb[0].toString(16).padStart(2,
+    "0") + set.program[i].rgb[1].toString(16).padStart(2, "0") + set.program[i].rgb[2].toString(16).padStart(2, "0") %>"
+    />
+  </p>
+</div>

@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "resolveJsonModule": true
-  }
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "outDir": "build"
+  },
+  "exclude": ["./next"],
+  "include": ["./src"]
 }

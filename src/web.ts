@@ -1,111 +1,91 @@
 import express from "express";
+import Next from "next";
 import fs from "fs/promises";
-import { createCanvas, extractImage } from "node-vexflow";
-import { Flow, Formatter, StaveNote, Stem, Voice } from "vexflow";
-import { Fraction } from "vexflow";
+import { existsSync } from "fs";
+import bodyParser from "body-parser";
 import config from "./config.json";
 import GLOBALS from "./globals";
 import { WebSocketServer } from "ws";
-import { Program, Set } from "./types";
+import { Set } from "./types";
+import reloadSets from "./api/reload-sets";
+import reloadLights from "./api/restart-lights";
+import generateNotation from "./api/generate-notation";
+import editSet from "./api/edit-set";
+import createSet from "./api/create-set";
 
 const initializeExpress = () => {
   if (config.webUi.enabled) {
-    const app = express();
+    const next = Next({ dev: process.env.NODE_ENV === "development", customServer: true, dir: "next" });
 
-    app.set("view engine", "ejs");
+    next
+      .prepare()
+      .then(() => {
+        const app = express();
+        const handle = next.getRequestHandler();
 
-    app.use(express.static("public"));
+        app.use((req, res, next) => {
+          res.setHeader("X-Powered-By", "TCA");
+          next();
+        });
 
-    app.post("/api/reload-sets", async (req, res) => {
-      console.log("Reloading sets...");
+        app.use(bodyParser.json());
 
-      const sets = await fs.readdir("src/sets");
+        app.post("/api/reload-sets", reloadSets);
 
-      let setsList: Set[] = [];
+        app.post("/api/restart-lights", reloadLights);
 
-      for (let i = 0; i < sets.length; i++) {
-        if (sets[i].substring(0, 1) !== "_") {
-          const set: Set = JSON.parse(await fs.readFile(`src/sets/${sets[i]}`, "utf-8"));
-          setsList.push(set);
-        }
-      }
+        app.get("/api/generate-notation", generateNotation);
 
-      GLOBALS.SETS = setsList;
+        app.patch("/api/set/:setId", editSet);
 
-      res.status(200);
-      res.end();
-    });
+        app.post("/api/set/:setId", createSet);
 
-    app.get("/api/generate-notation", async (req, res) => {
-      const program: Program = JSON.parse(req.query.program as string);
+        app.get("*", (req, res) => {
+          return handle(req, res);
+        });
 
-      const canvas = createCanvas();
+        // app.get("/", (req, res) => {
+        //   res.render("index", { GLOBALS });
+        // });
 
-      const renderer = new Flow.Renderer(canvas, Flow.Renderer.Backends.CANVAS);
-      renderer.resize(2000, 2000);
+        // app.get("/sets/create", (req, res) => {
+        //   res.render("create-set");
+        // });
 
-      const context = renderer.getContext();
-      context.scale(4, 4);
-      context.save();
-      context.fillStyle = "white";
-      context.fillRect(0, 0, 500, 500);
-      context.restore();
+        // app.get("/sets/:setId", (req, res, next) => {
+        //   const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
 
-      const stave = new Flow.Stave(10, 10, 480, { num_lines: 1 });
-      stave.addClef("percussion", undefined);
-      stave.setText("Notation", Flow.StaveModifier.Position.ABOVE);
-      stave.setContext(context).draw();
+        //   if (set) {
+        //     res.render("edit-set", { set });
+        //   } else {
+        //     next();
+        //   }
+        // });
 
-      let beats = 0;
+        app.listen(config.webUi.port, () => {
+          console.log(`Web UI listening on port ${config.webUi.port}`);
+        });
 
-      for (let i = 0; i < program.length; i++) {
-        beats += program[i].length;
-      }
+        GLOBALS.WSS = new WebSocketServer({ port: config.webUi.webSocketPort }, () => {
+          console.log(`WebSocket Server listening on port ${config.webUi.webSocketPort}`);
+        });
+      })
+      .catch((err) => {
+        console.log("Failed to initialize web server! Starting backup.");
+        console.error(err);
 
-      let programBeats = 0;
+        // spin up basic express server so the user knows an error occurred
+        const app = express();
 
-      const voice = new Voice({ num_beats: beats, beat_value: 4 });
-      voice.addTickables(
-        program.map((item, index) => {
-          programBeats += item.length;
-          return new StaveNote({
-            keys: ["b/4"],
-            duration:
-              new Fraction(item.length, 4).simplify().denominator.toString() +
-              (item.rgb[0] === 0 && item.rgb[1] === 0 && item.rgb[2] === 0 ? "r" : ""),
-            stem_direction: Stem.DOWN,
-          });
-        })
-      );
-      new Formatter().joinVoices([voice]).format([voice], 350);
+        app.get("*", (req, res) => {
+          res.setHeader("Content-Type", "text/html");
+          res.send(`<h1 style="color: #ff0000">Failed to initialize web server!</h1>`);
+        });
 
-      voice.draw(context, stave);
-
-      res.setHeader("Content-Type", "image/png");
-      res.send(extractImage(canvas));
-    });
-
-    app.get("/", (req, res) => {
-      res.render("index", { GLOBALS });
-    });
-
-    app.get("/sets/create", (req, res) => {
-      res.render("create-set");
-    });
-
-    app.get("/sets/:setId", (req, res) => {
-      const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
-
-      res.render("edit-set", { set });
-    });
-
-    const server = app.listen(config.webUi.port, () => {
-      console.log(`Web UI listening on port ${config.webUi.port}`);
-    });
-
-    GLOBALS.WSS = new WebSocketServer({ server }, () => {
-      console.log("Initialized WS Server");
-    });
+        app.listen(config.webUi.port, () => {
+          console.log(`Web UI listening on port ${config.webUi.port}`);
+        });
+      });
   }
 };
 

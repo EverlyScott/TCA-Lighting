@@ -3,25 +3,35 @@ import GLOBALS from "./globals";
 import config from "./config.json";
 
 const initializeLights = () => {
+  GLOBALS.LIGHTS_STOPPED = false;
+
+  if (GLOBALS.SET.program.length === 0) {
+    GLOBALS.LIGHTS_STOPPED = true;
+  }
+
   if (!config.arduino.enabled) {
     // Still send websockets for light if arduino is disabled
     (async () => {
-      while (true) {
-        for (let i = 0; i < GLOBALS.SET.program.length; i++) {
-          const item = GLOBALS.SET.program[i];
+      if (GLOBALS.SET.program.length)
+        while (true) {
+          if (GLOBALS.LIGHTS_STOPPED === true) {
+            return;
+          }
+          for (let i = 0; i < GLOBALS.SET.program.length; i++) {
+            const item = GLOBALS.SET.program[i];
 
-          GLOBALS.WSS.clients.forEach((client) => {
-            client.send(
-              JSON.stringify({
-                op: "light-change",
-                data: item.rgb,
-              })
-            );
-          });
+            GLOBALS.WSS.clients.forEach((client) => {
+              client.send(
+                JSON.stringify({
+                  op: "light-change",
+                  data: item.rgb,
+                })
+              );
+            });
 
-          await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
+            await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
+          }
         }
-      }
     })();
   }
 
@@ -33,6 +43,9 @@ const initializeLights = () => {
     const blueLed = new Led({ pin: 11 });
 
     while (true) {
+      if (GLOBALS.LIGHTS_STOPPED === true) {
+        return;
+      }
       for (let i = 0; i < GLOBALS.SET.program.length; i++) {
         const item = GLOBALS.SET.program[i];
 

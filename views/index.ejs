@@ -9,6 +9,10 @@
   <body>
     <h1>Current status:</h1>
     <div style="width: 100px; height: 100px"><%- include("./partials/currentState.ejs") %></div>
+    <% if (GLOBALS.LIGHTS_STOPPED === true) { %>
+    <p><strong>Lights have been disabled due to an issue!</strong></p>
+    <button id="restartLightsBtn">Restart</button>
+    <% } %>
     <h2>Current Set</h2>
     <p><%= GLOBALS.SET.name %></p>
     <button>Previous</button><button>Next</button>
@@ -18,17 +22,30 @@
     <h1>Sets</h1>
     <ul>
       <% for (let i = 0; i < GLOBALS.SETS.length; i++) { %>
-      <li><a href="/sets/<%= GLOBALS.SETS[i].id %>"><%= GLOBALS.SETS[i].name %></a></li>
+      <li>
+        <a href="/sets/<%= GLOBALS.SETS[i].id %>"><%= GLOBALS.SETS[i].name %></a>
+        <% if (GLOBALS.SET.id === GLOBALS.SETS[i].id) { %> &nbsp;(current) <% } %>
+      </li>
       <% } %>
       <li><a href="/sets/create">Create New Set</a></li>
     </ul>
-    <button onclick="reloadSets()">Reload Sets</button>
+    <button id="reloadSetsBtn" onclick="reloadSets()">Reload Sets</button>
 
     <script>
-      function reloadSets() {
+      document.getElementById("reloadSetsBtn").addEventListener("click", () => {
         fetch("/api/reload-sets", { method: "POST" }).then(() => {
           location.reload();
         });
+      });
+
+      const restartLightsBtn = document.getElementById("restartLightsBtn");
+
+      if (restartLightsBtn) {
+        restartLightsBtn.addEventListener("click", () => [
+          fetch("/api/restart-lights", { method: "POST" }).then(() => {
+            location.reload();
+          }),
+        ]);
       }
     </script>
   </body>
