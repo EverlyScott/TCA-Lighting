@@ -4,10 +4,6 @@ module.exports = {
       script: "build/main.js",
       watch: ".",
     },
-    {
-      script: "./service-worker/",
-      watch: ["./service-worker"],
-    },
   ],
 
   deploy: {
