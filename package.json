@@ -7,7 +7,8 @@
     "start": "node .",
     "dev": "NODE_ENV=development ts-node src/main.ts",
     "build": "concurrently \"cd next && npx next build\" \"npx tsc --project .\"",
-    "cleanBuilds": "rm -rf build next/.next"
+    "cleanBuilds": "rm -rf build next/.next",
+    "deploy": "pm2 deploy production"
   },
   "keywords": [],
   "author": "",
