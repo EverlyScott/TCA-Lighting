@@ -8,7 +8,7 @@ module.exports = {
   deploy: {
     production: {
       user: "tca",
-      host: "http://68.117.90.63:222/",
+      host: "10.0.0.1",
       ref: "origin/main",
       repo: "https://github.com/EverlyScott/TCA-Lighting",
       path: "/var/TCA-Lighting",
