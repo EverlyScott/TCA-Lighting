@@ -1,8 +1,5 @@
 import { NextPage } from "next";
 import { Typography, Paper, Button, Divider } from "@mui/material";
-import axios from "axios";
-import config from "../../src/config.json";
-import type GLOBALS from "../../src/globals";
 import LightsDisabledMessage from "./_lightsDisabled";
 import CurrentSetControls from "./_currentSetControls";
 import TapBPM from "./_tapBPM";

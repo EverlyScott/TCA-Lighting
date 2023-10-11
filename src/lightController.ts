@@ -44,6 +44,31 @@ const initializeLights = () => {
     const greenLed = new Led({ pin: 10 });
     const blueLed = new Led({ pin: 11 });
 
+    const setColor = (r: number, g: number, b: number) => {
+      redLed.off();
+      greenLed.off();
+      blueLed.off();
+
+      redLed.brightness(r);
+      greenLed.brightness(g);
+      blueLed.brightness(b);
+    };
+
+    // If lights have not been initialized yet, show that lights have been initialized by flashing on for 500ms and off for 500ms 2 times
+    if (!GLOBALS.INITIALIZED_LIGHTS_FIRST_BOOT) {
+      for (let i = 0; i < 4; i++) {
+        if (i % 2 === 0) {
+          setColor(0, 0, 0);
+        } else {
+          setColor(255, 255, 255);
+        }
+
+        await sleep(500);
+      }
+
+      GLOBALS.INITIALIZED_LIGHTS_FIRST_BOOT = true;
+    }
+
     while (true) {
       if (GLOBALS.LIGHTS_STOPPED === true) {
         return;

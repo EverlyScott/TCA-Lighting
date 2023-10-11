@@ -1,12 +1,8 @@
-import express, { ErrorRequestHandler } from "express";
-import Next from "next";
-import fs from "fs/promises";
-import { existsSync } from "fs";
+import express from "express";
 import bodyParser from "body-parser";
 import config from "./config.json";
 import GLOBALS from "./globals";
 import { WebSocketServer } from "ws";
-import { Set } from "./types";
 import reloadSets from "./api/reload-sets";
 import reloadLights from "./api/restart-lights";
 import generateNotation from "./api/generate-notation";
@@ -15,92 +11,63 @@ import createSet from "./api/create-set";
 import getGlobals from "./api/get-globals";
 
 const initializeExpress = () => {
-  if (config.webUi.enabled) {
-    const next = Next({ dev: process.env.NODE_ENV === "development", customServer: true, dir: "next" });
+  const app = express();
 
-    next
-      .prepare()
-      .then(() => {
-        const app = express();
-        const handle = next.getRequestHandler();
+  app.use((req, res, next) => {
+    res.setHeader("X-Powered-By", "The Class Act");
+    next();
+  });
 
-        app.use((req, res, next) => {
-          res.setHeader("X-Powered-By", "TCA");
-          next();
-        });
+  app.use(bodyParser.json());
 
-        app.use(bodyParser.json());
+  app.post("/reload-sets", reloadSets);
 
-        app.post("/api/reload-sets", reloadSets);
+  app.post("/restart-lights", reloadLights);
 
-        app.post("/api/restart-lights", reloadLights);
+  app.get("/generate-notation", generateNotation);
 
-        app.get("/api/generate-notation", generateNotation);
+  app.patch("/set/:setId", editSet);
 
-        app.patch("/api/set/:setId", editSet);
+  app.post("/set/:setId", createSet);
 
-        app.post("/api/set/:setId", createSet);
+  app.get("/globals", getGlobals);
 
-        app.get("/api/globals", getGlobals);
+  app.get("*", (req, res) => {
+    res.status(404).send({ error: { code: 404, message: "Not Found" } });
+  });
 
-        app.get("/api*", (req, res) => {
-          res.status(404).send({ error: { code: 404, message: "Not Found" } });
-        });
+  // const errorHandler: ErrorRequestHandler = (err, req, res) => {
+  //   // next.renderError(err, req, res, req.path);
+  //   res.send("a");
+  // };
 
-        app.get("*", (req, res) => {
-          return handle(req, res);
-        });
+  // app.use(errorHandler);
 
-        // const errorHandler: ErrorRequestHandler = (err, req, res) => {
-        //   // next.renderError(err, req, res, req.path);
-        //   res.send("a");
-        // };
+  // app.get("/", (req, res) => {
+  //   res.render("index", { GLOBALS });
+  // });
 
-        // app.use(errorHandler);
+  // app.get("/sets/create", (req, res) => {
+  //   res.render("create-set");
+  // });
 
-        // app.get("/", (req, res) => {
-        //   res.render("index", { GLOBALS });
-        // });
+  // app.get("/sets/:setId", (req, res, next) => {
+  //   const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
 
-        // app.get("/sets/create", (req, res) => {
-        //   res.render("create-set");
-        // });
+  //   if (set) {
+  //     res.render("edit-set", { set });
+  //   } else {
+  //     next();
+  //   }
+  // });
 
-        // app.get("/sets/:setId", (req, res, next) => {
-        //   const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
+  app.listen(config.api.port, () => {
+    console.log(`Web UI listening on port ${config.api.port}`);
+  });
 
-        //   if (set) {
-        //     res.render("edit-set", { set });
-        //   } else {
-        //     next();
-        //   }
-        // });
-
-        app.listen(config.webUi.port, () => {
-          console.log(`Web UI listening on port ${config.webUi.port}`);
-        });
-
-        GLOBALS.WSS = new WebSocketServer({ port: config.webUi.webSocketPort }, () => {
-          console.log(`WebSocket Server listening on port ${config.webUi.webSocketPort}`);
-        });
-      })
-      .catch((err) => {
-        console.log("Failed to initialize web server! Starting backup.");
-        console.error(err);
-
-        // spin up basic express server so the user knows an error occurred
-        const app = express();
-
-        app.get("*", (req, res) => {
-          res.setHeader("Content-Type", "text/html");
-          res.send(`<h1 style="color: #ff0000">Failed to initialize web server!</h1>`);
-        });
-
-        app.listen(config.webUi.port, () => {
-          console.log(`Web UI listening on port ${config.webUi.port}`);
-        });
-      });
-  }
+  GLOBALS.WSS = new WebSocketServer({ port: config.api.webSocketPort }, () => {
+    console.log(`WebSocket Server listening on port ${config.api.webSocketPort}`);
+  });
 };
 
 export default initializeExpress;

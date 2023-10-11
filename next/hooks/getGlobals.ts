@@ -3,7 +3,7 @@ import config from "../../src/config.json";
 import type GLOBALS from "../../src/globals";
 
 const getGlobals = async () => {
-  const globals = await axios.get<typeof GLOBALS>(`http://127.0.0.1:${config.webUi.port}/api/globals`);
+  const globals = await axios.get<typeof GLOBALS>(`http://127.0.0.1:${config.api.port}/globals`);
 
   if (globals.status === 200) {
     return globals.data;

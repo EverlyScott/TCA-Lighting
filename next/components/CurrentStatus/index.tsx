@@ -27,7 +27,7 @@ const CurrentStatus: React.FC = () => {
   };
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://${location.hostname}:${config.webUi.webSocketPort}`);
+    const ws = new WebSocket(`ws://${location.hostname}:${config.api.webSocketPort}`);
 
     ws.addEventListener("open", handleWsOpen);
     ws.addEventListener("message", handleMessage);

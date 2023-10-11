@@ -6,5 +6,5 @@
     "outDir": "build"
   },
   "exclude": ["./next"],
-  "include": ["./src"]
+  "include": ["./src", "./node-vexflow.d.ts"]
 }
