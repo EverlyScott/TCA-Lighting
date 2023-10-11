@@ -1,13 +1,13 @@
 "use client";
 
-import { Typography, useMediaQuery, useTheme, TextField } from "@mui/material";
-import axios from "axios";
-import config from "../../../../src/config.json";
+import { Typography, useMediaQuery, useTheme, TextField, Paper } from "@mui/material";
+import { usePathname } from "next/navigation";
 import { NextPage } from "next";
 import { Set } from "../../../../src/types";
 import getGlobals from "../../../hooks/getGlobals";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Loading from "./loading";
+import config from "@/config.json";
 
 interface IProps {
   params: IParams;
@@ -22,8 +22,6 @@ const fetchSet = async (setId: string) => {
 
   const set = globals.SETS.find((set) => set.id === setId);
 
-  // await new Promise((resolve) => setTimeout(resolve, 30000));
-
   if (set) {
     return set;
   } else {
@@ -33,6 +31,11 @@ const fetchSet = async (setId: string) => {
 
 const EditSet: NextPage<IProps> = ({ params }) => {
   const [set, setSet] = useState<Set>();
+  const [imageUrl, setImageUrl] = useState("");
+  const theme = useTheme();
+  const isMdDown = useMediaQuery(theme.breakpoints.down("md"));
+
+  console.log(imageUrl);
 
   useEffect(() => {
     (async () => {
@@ -42,8 +45,15 @@ const EditSet: NextPage<IProps> = ({ params }) => {
     })();
   }, []);
 
-  const theme = useTheme();
-  const isMdDown = useMediaQuery(theme.breakpoints.down("md"));
+  useMemo(() => {
+    if (window && window.location) {
+      setImageUrl(
+        `http://${location.hostname}:${config.api.port}/generate-notation?set=${encodeURIComponent(
+          JSON.stringify(set)
+        )}`
+      );
+    }
+  }, [set]);
 
   if (set) {
     return (
@@ -51,14 +61,27 @@ const EditSet: NextPage<IProps> = ({ params }) => {
         <Typography variant="h4" component="h2">
           Editing {set.name}
         </Typography>
-        <div style={{ display: "flex", flexDirection: isMdDown ? "column" : "initial" }}>
-          <div style={{ flex: 1 }}>
-            <TextField label="Name" />
+        <div style={{ display: "flex", flexDirection: isMdDown ? "column" : "initial", gap: "1rem" }}>
+          <Paper sx={{ flex: 1, padding: "1rem", display: "flex", flexDirection: "column" }}>
+            <TextField label="Name" value={set.name} />
             <br />
-            <TextField sx={{ width: "195px" }} label="ID" inputProps={{ style: { fontFamily: "monospace" } }} />
+            <TextField label="ID" inputProps={{ style: { fontFamily: "monospace" } }} />
             <br />
             <TextField label="Initial BPM" type="number" />
-          </div>
+          </Paper>
+          <Paper
+            sx={{
+              flex: 1,
+              padding: "1rem",
+              width: isMdDown ? "100%" : "50%",
+              minWidth: isMdDown ? "initial" : "500px",
+              height: isMdDown ? "auto" : "initial",
+              display: "flex",
+              flexDirection: "column-reverse",
+            }}
+          >
+            <img src={imageUrl} width="100%" style={{ position: "sticky", bottom: 0 }} />
+          </Paper>
         </div>
       </>
     );

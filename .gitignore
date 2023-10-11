@@ -133,3 +133,5 @@ src/sets/*
 src/config.json
 
 build
+
+next/*

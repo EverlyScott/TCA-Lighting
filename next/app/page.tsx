@@ -6,16 +6,17 @@ import TapBPM from "./_tapBPM";
 import SetsList from "./_setsList";
 import CurrentStatus from "$/CurrentStatus";
 import getGlobals from "../hooks/getGlobals";
+import CenterOfPage from "$/CenterOfPage";
 
 const Home: NextPage = async () => {
   const globals = await getGlobals();
 
   return (
-    <>
+    <CenterOfPage>
       <Typography variant="h4" component="h2">
         Current Status
       </Typography>
-      <Paper sx={{ maxWidth: 1000, padding: 1 }}>
+      <Paper sx={{ padding: "1rem" }}>
         <CurrentStatus />
         <Divider sx={{ margin: "16px 0" }} />
         <LightsDisabledMessage show={globals.LIGHTS_STOPPED} />
@@ -37,7 +38,7 @@ const Home: NextPage = async () => {
       <Paper>
         <SetsList sets={globals.SETS} />
       </Paper>
-    </>
+    </CenterOfPage>
   );
 };
 

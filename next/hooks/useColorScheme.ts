@@ -9,6 +9,7 @@ const useColorScheme: () => [[Theme, ColorScheme], SetterOrUpdater<ColorScheme>]
   const [initialMode, setInitialMode] = useState<ColorScheme>();
   const [mode, setMode] = useRecoilState(colorSchemeAtom);
 
+  //We need to do this or else the state will only partially change if a browser is in a mode other than the default
   useEffect(() => {
     if (!loaded) {
       if (window) {

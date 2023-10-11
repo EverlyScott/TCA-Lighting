@@ -7,7 +7,7 @@ import NextAppDirEmotionCacheProvider from "./EmotionCache";
 import useColorScheme from "../../hooks/useColorScheme";
 
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
-  const [[theme, mode], setMode] = useColorScheme();
+  const [[theme]] = useColorScheme();
 
   return (
     <NextAppDirEmotionCacheProvider options={{ key: "mui" }}>
