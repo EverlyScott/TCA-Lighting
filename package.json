@@ -7,7 +7,7 @@
     "start": "node .",
     "dev": "NODE_ENV=development ts-node src/main.ts",
     "build": "concurrently \"cd next && npx next build\" \"npx tsc --project .\"",
-    "removeBuilds": "rm -rf build next/.next"
+    "cleanBuilds": "rm -rf build next/.next"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +17,8 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.12",
-    "@mui/material": "^5.14.12",
+    "@mui/material": "5.14.12",
+    "@mui/system": "5.14.12",
     "axios": "^1.5.1",
     "body-parser": "^1.20.2",
     "ejs": "^3.1.9",
@@ -26,6 +27,9 @@
     "musicxml-interfaces": "^0.0.21",
     "next": "^13.5.4",
     "node-vexflow": "^0.1.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-window": "^1.8.9",
     "recoil": "^0.7.7",
     "sass": "^1.69.0",
     "ts-node": "^10.9.1",

@@ -1,4 +1,4 @@
-import express from "express";
+import express, { ErrorRequestHandler } from "express";
 import Next from "next";
 import fs from "fs/promises";
 import { existsSync } from "fs";
@@ -12,6 +12,7 @@ import reloadLights from "./api/restart-lights";
 import generateNotation from "./api/generate-notation";
 import editSet from "./api/edit-set";
 import createSet from "./api/create-set";
+import getGlobals from "./api/get-globals";
 
 const initializeExpress = () => {
   if (config.webUi.enabled) {
@@ -40,9 +41,22 @@ const initializeExpress = () => {
 
         app.post("/api/set/:setId", createSet);
 
+        app.get("/api/globals", getGlobals);
+
+        app.get("/api*", (req, res) => {
+          res.status(404).send({ error: { code: 404, message: "Not Found" } });
+        });
+
         app.get("*", (req, res) => {
           return handle(req, res);
         });
+
+        // const errorHandler: ErrorRequestHandler = (err, req, res) => {
+        //   // next.renderError(err, req, res, req.path);
+        //   res.send("a");
+        // };
+
+        // app.use(errorHandler);
 
         // app.get("/", (req, res) => {
         //   res.render("index", { GLOBALS });

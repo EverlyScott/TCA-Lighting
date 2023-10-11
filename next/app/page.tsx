@@ -1,14 +1,45 @@
-"use client";
-
-import { Typography } from "@mui/material";
-import axios from "axios";
 import { NextPage } from "next";
-import { useEffect } from "react";
+import { Typography, Paper, Button, Divider } from "@mui/material";
+import axios from "axios";
+import config from "../../src/config.json";
+import type GLOBALS from "../../src/globals";
+import LightsDisabledMessage from "./_lightsDisabled";
+import CurrentSetControls from "./_currentSetControls";
+import TapBPM from "./_tapBPM";
+import SetsList from "./_setsList";
+import CurrentStatus from "$/CurrentStatus";
+import getGlobals from "../hooks/getGlobals";
 
-const Home: NextPage = () => {
+const Home: NextPage = async () => {
+  const globals = await getGlobals();
+
   return (
     <>
-      <Typography>Test</Typography>
+      <Typography variant="h4" component="h2">
+        Current Status
+      </Typography>
+      <Paper sx={{ maxWidth: 1000, padding: 1 }}>
+        <CurrentStatus />
+        <Divider sx={{ margin: "16px 0" }} />
+        <LightsDisabledMessage show={globals.LIGHTS_STOPPED} />
+        <Typography variant="h5" component="h3">
+          Current Set
+        </Typography>
+        <Typography>{globals.SET.name}</Typography>
+        <CurrentSetControls currentSet={globals.SET} sets={globals.SETS} />
+        <Divider sx={{ margin: "16px 0" }} />
+        <Typography variant="h5" component="h3">
+          Current BPM
+        </Typography>
+        <Typography>{globals.BPM} BPM</Typography>
+        <TapBPM />
+      </Paper>
+      <Typography sx={{ marginTop: 2 }} variant="h4" component="h2">
+        Sets
+      </Typography>
+      <Paper>
+        <SetsList sets={globals.SETS} />
+      </Paper>
     </>
   );
 };

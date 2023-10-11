@@ -17,15 +17,17 @@ const Layout: Layout = ({ children }) => {
         <RecoilRoot>
           <ThemeRegistry>
             <div id="root">
-              <AppBar pageTitle={metadata.title as string} />
+              <AppBar pageTitle={metadata.title!.toString()} />
               <AppBarMargin />
-              <div style={{ marginTop: 32 }}>
-                <noscript>
-                  <Typography sx={{ textAlign: "center" }} variant="h3" component="h2">
-                    Please enable JavaScript!
-                  </Typography>
-                </noscript>
-                {children}
+              <div style={{ display: "flex", justifyContent: "center", margin: "32px 16px 32px 16px" }}>
+                <div style={{ maxWidth: 1000, flexGrow: 1 }}>
+                  <noscript>
+                    <Typography sx={{ textAlign: "center" }} variant="h3" component="h2">
+                      Please enable JavaScript!
+                    </Typography>
+                  </noscript>
+                  {children}
+                </div>
               </div>
             </div>
           </ThemeRegistry>

@@ -20,14 +20,16 @@ const initializeLights = () => {
           for (let i = 0; i < GLOBALS.SET.program.length; i++) {
             const item = GLOBALS.SET.program[i];
 
-            GLOBALS.WSS.clients.forEach((client) => {
-              client.send(
-                JSON.stringify({
-                  op: "light-change",
-                  data: item.rgb,
-                })
-              );
-            });
+            if (GLOBALS.WSS) {
+              GLOBALS.WSS.clients.forEach((client) => {
+                client.send(
+                  JSON.stringify({
+                    op: "light-change",
+                    data: item.rgb,
+                  })
+                );
+              });
+            }
 
             await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
           }

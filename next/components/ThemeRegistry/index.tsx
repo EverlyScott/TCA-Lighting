@@ -24,7 +24,7 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
   const theme = React.useMemo(() => (mode === "light" ? lightTheme : darkTheme), [mode]);
 
   return (
-    <NextAppDirEmotionCacheProvider options={{ key: "mui" }}>
+    <NextAppDirEmotionCacheProvider options={{ key: "mui", prepend: true }}>
       <ThemeToggleContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
