@@ -13,7 +13,8 @@ module.exports = {
       repo: "https://github.com/EverlyScott/TCA-Lighting",
       path: "/var/TCA-Lighting",
       "pre-deploy-local": "",
-      "post-deploy": "pnpm install && pnpm build && pm2 reload ecosystem.config.js",
+      "post-deploy":
+        "pnpm install && cp src/config.template.json src/config.json && pnpm build && pm2 reload ecosystem.config.js",
       "pre-setup": "",
     },
   },
