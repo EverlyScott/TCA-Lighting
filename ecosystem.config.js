@@ -5,7 +5,6 @@ module.exports = {
       watch: ".",
     },
   ],
-
   deploy: {
     production: {
       user: "tca",
@@ -14,7 +13,7 @@ module.exports = {
       repo: "https://github.com/EverlyScott/TCA-Lighting",
       path: "/var/TCA-Lighting",
       "pre-deploy-local": "",
-      "post-deploy": "pnpm install && pnpm build && pm2 reload ecosystem.config.js --env production",
+      "post-deploy": "pnpm install && pnpm build && pm2 reload ecosystem.config.js",
       "pre-setup": "",
     },
   },
