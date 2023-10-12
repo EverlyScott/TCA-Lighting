@@ -14,7 +14,7 @@ module.exports = {
       path: "/var/TCA-Lighting",
       "pre-deploy-local": "",
       "post-deploy":
-        "pnpm install && ln -f ../config.json ./src/config.json && pnpm build && pm2 reload ecosystem.config.js",
+        "pnpm install && rm ./src/config.json && ln ../config.json ./src/config.json && pnpm build && pm2 reload ecosystem.config.js",
       "pre-setup": "",
     },
     productionRemote: {
