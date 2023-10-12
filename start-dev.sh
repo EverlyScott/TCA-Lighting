@@ -1,1 +1,1 @@
-npx concurrently "pnpm dev" "cd next && pnpm dev"
+npx concurrently "pnpm dev" "../TCA-Lighting-Frontend && pnpm dev"
