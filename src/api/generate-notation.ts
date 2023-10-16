@@ -187,10 +187,7 @@ const generateNotation: RequestHandler = async (req, res) => {
 
       if (note instanceof StaveNote) {
         currentStaveNotes.push(note);
-        console.log(i, "a");
       } else if (note instanceof Vex.Flow.BarNote) {
-        console.log(i, "b");
-        console.log(currentStaveNotes.length);
         const stave = new Flow.Stave(10, 100 * staves.length, 480);
         stave.addClef("percussion");
         if (staves.length === 0) {

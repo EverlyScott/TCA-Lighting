@@ -38,20 +38,29 @@ const initializeLights = () => {
   }
 
   GLOBALS.BOARD.on("ready", async () => {
-    console.log("ready");
-
-    const redLed = new Led({ pin: 9 });
-    const greenLed = new Led({ pin: 10 });
-    const blueLed = new Led({ pin: 11 });
+    const redLed = new Led({ pin: config.arduino.pins.r });
+    const greenLed = new Led({ pin: config.arduino.pins.g });
+    const blueLed = new Led({ pin: config.arduino.pins.b });
+    let whiteLed: Led;
+    if (config.arduino.hasDedicatedWhite) {
+      whiteLed = new Led({ pin: config.arduino.pins.w });
+    }
 
     const setColor = (r: number, g: number, b: number) => {
       redLed.off();
       greenLed.off();
       blueLed.off();
+      if (config.arduino.hasDedicatedWhite) {
+        whiteLed.off();
+      }
 
-      redLed.brightness(r);
-      greenLed.brightness(g);
-      blueLed.brightness(b);
+      if (config.arduino.hasDedicatedWhite && r === 255 && g === 255 && b === 255) {
+        whiteLed.on();
+      } else {
+        redLed.brightness(r);
+        greenLed.brightness(g);
+        blueLed.brightness(b);
+      }
     };
 
     // If lights have not been initialized yet, show that lights have been initialized by flashing on for 500ms and off for 500ms 2 times
@@ -76,13 +85,7 @@ const initializeLights = () => {
       for (let i = 0; i < GLOBALS.SET.program.length; i++) {
         const item = GLOBALS.SET.program[i];
 
-        redLed.off();
-        greenLed.off();
-        blueLed.off();
-
-        redLed.brightness(item.rgb[0]);
-        greenLed.brightness(item.rgb[1]);
-        blueLed.brightness(item.rgb[2]);
+        setColor(...item.rgb);
 
         GLOBALS.WSS.clients.forEach((client) => {
           client.send(

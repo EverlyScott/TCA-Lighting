@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import bodyParser from "body-parser";
 import config from "./config.json";
 import GLOBALS from "./globals";
@@ -17,6 +18,8 @@ const initializeExpress = () => {
     res.setHeader("X-Powered-By", "The Class Act");
     next();
   });
+
+  app.use(cors());
 
   app.use(bodyParser.json());
 

@@ -1,11 +1,24 @@
 {
-  "webUi": {
-    "enabled": true,
-    "port": 3000
+  "frontend": {
+    "port": 3000,
+    // The number of program items the frontend is allowed to attempt to load (if this number is too high it might just crash the page if loading a set with too many program items)
+    "editorLimit": 1000
+  },
+  "api": {
+    "port": 3001,
+    "webSocketPort": 3002
   },
   "arduino": {
     "enabled": true,
     // You will only need to specify the port if you're having issues or want greater reliability
-    "comPort": null
+    "comPort": null,
+    // If your LED strips have a dedicated white LED
+    "hasDedicatedWhite": true,
+    "pins": {
+      "r": 9,
+      "g": 10,
+      "b": 11,
+      "w": 12 // Not required if `hasDedicatedWhite` is false
+    }
   }
 }

@@ -5,6 +5,5 @@
     "removeComments": true,
     "outDir": "build"
   },
-  "exclude": ["./next"],
   "include": ["./src", "./node-vexflow.d.ts"]
 }
