@@ -10,6 +10,9 @@ import generateNotation from "./api/generate-notation";
 import editSet from "./api/edit-set";
 import createSet from "./api/create-set";
 import getGlobals from "./api/get-globals";
+import setCurrentSetIndex from "./api/set-current-set-id";
+import deleteSet from "./api/delete-set";
+import bulkEditSets from "./api/bulk-edit-sets";
 
 const initializeExpress = () => {
   const app = express();
@@ -29,43 +32,24 @@ const initializeExpress = () => {
 
   app.get("/generate-notation", generateNotation);
 
-  app.patch("/set/:setId", editSet);
+  app.put("/sets", bulkEditSets);
+
+  app.put("/set/:setId", editSet);
 
   app.post("/set/:setId", createSet);
 
+  app.delete("/set/:setId", deleteSet);
+
   app.get("/globals", getGlobals);
+
+  app.put("/current-set-id", setCurrentSetIndex);
 
   app.get("*", (req, res) => {
     res.status(404).send({ error: { code: 404, message: "Not Found" } });
   });
 
-  // const errorHandler: ErrorRequestHandler = (err, req, res) => {
-  //   // next.renderError(err, req, res, req.path);
-  //   res.send("a");
-  // };
-
-  // app.use(errorHandler);
-
-  // app.get("/", (req, res) => {
-  //   res.render("index", { GLOBALS });
-  // });
-
-  // app.get("/sets/create", (req, res) => {
-  //   res.render("create-set");
-  // });
-
-  // app.get("/sets/:setId", (req, res, next) => {
-  //   const set = GLOBALS.SETS.find((set) => set.id === req.params.setId);
-
-  //   if (set) {
-  //     res.render("edit-set", { set });
-  //   } else {
-  //     next();
-  //   }
-  // });
-
   app.listen(config.api.port, () => {
-    console.log(`Web UI listening on port ${config.api.port}`);
+    console.log(`API listening on port ${config.api.port}`);
   });
 
   GLOBALS.WSS = new WebSocketServer({ port: config.api.webSocketPort }, () => {

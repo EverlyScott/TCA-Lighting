@@ -108,20 +108,11 @@ const generateNotation: RequestHandler = async (req, res) => {
       beats += program[i].length;
     }
 
-    const numberOfSystems = Math.ceil(beats / 4);
-
     const margin = 200;
 
-    const systemHeight = 400;
-
-    renderer.resize(2000, systemHeight * numberOfSystems);
+    const systemHeight = 325;
 
     const context = renderer.getContext();
-    context.scale(4, 4);
-    context.save();
-    context.fillStyle = "white";
-    context.fillRect(0, 0, 500, (systemHeight * numberOfSystems + margin) / 4);
-    context.restore();
 
     let drawnBeats = 0;
 
@@ -188,7 +179,7 @@ const generateNotation: RequestHandler = async (req, res) => {
       if (note instanceof StaveNote) {
         currentStaveNotes.push(note);
       } else if (note instanceof Vex.Flow.BarNote) {
-        const stave = new Flow.Stave(10, 100 * staves.length, 480);
+        const stave = new Flow.Stave(10, 75 * staves.length, 480);
         stave.addClef("percussion");
         if (staves.length === 0) {
           stave.addTimeSignature("4/4");
@@ -207,11 +198,24 @@ const generateNotation: RequestHandler = async (req, res) => {
     }
 
     if (currentStaveNotes.length > 0) {
-      const stave = new Flow.Stave(10, 100 * staves.length, 480);
+      const stave = new Flow.Stave(10, 75 * staves.length, 480);
       stave.addClef("percussion");
       if (staves.length === 0) {
         stave.addTimeSignature("4/4");
         stave.setText(set.name, Flow.StaveModifier.Position.ABOVE);
+
+        // const tempo = new Vex.Flow.StaveTempo(
+        //   {
+        //     bpm: set.initialBPM,
+        //     duration: "q",
+        //   },
+        //   10,
+        //   0
+        // );
+
+        // tempo.setStave(stave);
+        // tempo.setContext(context).draw(stave, 0);
+
         // stave.setTempo({ bpm: set.initialBPM }, Flow.StaveTempo.Position.BEGIN);
       }
       staves.push(stave);
@@ -226,7 +230,21 @@ const generateNotation: RequestHandler = async (req, res) => {
 
     staves[staves.length - 1].setEndBarType(BarlineType.REPEAT_END);
 
+    renderer.resize(2000, systemHeight * staves.length + margin);
+    context.scale(4, 4);
+    context.save();
+    context.fillStyle = "white";
+    context.fillRect(0, 0, 500, (systemHeight * staves.length + margin) / 4 + margin);
+    context.restore();
+
     for (let i = 0; i < staves.length; i++) {
+      staves[i].setConfigForLines([
+        { visible: false },
+        { visible: false },
+        { visible: true },
+        { visible: false },
+        { visible: false },
+      ]);
       staves[i].setContext(context).draw();
     }
 

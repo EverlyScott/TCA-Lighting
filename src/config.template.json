@@ -18,7 +18,7 @@
       "r": 9,
       "g": 10,
       "b": 11,
-      "w": 12 // Not required if `hasDedicatedWhite` is false
+      "w": 12 // Set to null if `hasDedicatedWhite` is false
     }
   }
 }

@@ -47,32 +47,45 @@ const initializeLights = () => {
     }
 
     const setColor = (r: number, g: number, b: number) => {
-      redLed.off();
-      greenLed.off();
-      blueLed.off();
-      if (config.arduino.hasDedicatedWhite) {
-        whiteLed.off();
-      }
+      try {
+        redLed.off();
+        greenLed.off();
+        blueLed.off();
+        if (config.arduino.hasDedicatedWhite) {
+          whiteLed.off();
+        }
 
-      if (config.arduino.hasDedicatedWhite && r === 255 && g === 255 && b === 255) {
-        whiteLed.on();
-      } else {
-        redLed.brightness(r);
-        greenLed.brightness(g);
-        blueLed.brightness(b);
+        if (config.arduino.hasDedicatedWhite && r === 255 && g === 255 && b === 255) {
+          whiteLed.on();
+        } else {
+          redLed.brightness(r);
+          greenLed.brightness(g);
+          blueLed.brightness(b);
+        }
+      } catch (err) {
+        console.error(err);
       }
     };
 
     // If lights have not been initialized yet, show that lights have been initialized by flashing on for 500ms and off for 500ms 2 times
     if (!GLOBALS.INITIALIZED_LIGHTS_FIRST_BOOT) {
-      for (let i = 0; i < 4; i++) {
-        if (i % 2 === 0) {
-          setColor(0, 0, 0);
-        } else {
-          setColor(255, 255, 255);
-        }
-
-        await sleep(500);
+      setColor(255, 0, 0);
+      await sleep(250);
+      setColor(0, 0, 0);
+      await sleep(250);
+      setColor(0, 255, 0);
+      await sleep(250);
+      setColor(0, 0, 0);
+      await sleep(250);
+      setColor(0, 0, 255);
+      await sleep(250);
+      setColor(0, 0, 0);
+      await sleep(250);
+      if (config.arduino.hasDedicatedWhite) {
+        setColor(255, 255, 255);
+        await sleep(250);
+        setColor(0, 0, 0);
+        await sleep(250);
       }
 
       GLOBALS.INITIALIZED_LIGHTS_FIRST_BOOT = true;
@@ -87,14 +100,18 @@ const initializeLights = () => {
 
         setColor(...item.rgb);
 
-        GLOBALS.WSS.clients.forEach((client) => {
-          client.send(
-            JSON.stringify({
-              op: "light-change",
-              data: item.rgb,
-            })
-          );
-        });
+        try {
+          GLOBALS.WSS.clients.forEach((client) => {
+            client.send(
+              JSON.stringify({
+                op: "light-change",
+                data: item.rgb,
+              })
+            );
+          });
+        } catch (err) {
+          console.error(err);
+        }
 
         await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
       }
