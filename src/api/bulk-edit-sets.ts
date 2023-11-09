@@ -8,8 +8,6 @@ const bulkEditSets: RequestHandler = async (req, res) => {
   try {
     const newSets: Set[] = req.body.sets;
 
-    console.log(newSets);
-
     for (let i = 0; i < newSets.length; i++) {
       const newSet = newSets[i];
 

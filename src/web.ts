@@ -13,6 +13,7 @@ import getGlobals from "./api/get-globals";
 import setCurrentSetIndex from "./api/set-current-set-id";
 import deleteSet from "./api/delete-set";
 import bulkEditSets from "./api/bulk-edit-sets";
+import fs from "fs/promises";
 
 const initializeExpress = () => {
   const app = express();
@@ -25,6 +26,11 @@ const initializeExpress = () => {
   app.use(cors());
 
   app.use(bodyParser.json());
+
+  app.get("/_schema.json", async (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(await fs.readFile("src/sets/_schema.json"));
+  });
 
   app.post("/reload-sets", reloadSets);
 

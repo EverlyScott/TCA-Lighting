@@ -19,27 +19,66 @@
     "program": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "rgb": {
-            "type": "array",
-            "items": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 255
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["solid"]
+              },
+              "rgb": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "length": {
+                "type": "number",
+                "minimum": 0
+              }
             },
-            "minItems": 3,
-            "maxItems": 3
+            "required": ["type", "rgb", "length"]
           },
-          "type": {
-            "type": "number",
-            "minimum": 0
-          },
-          "dotted": {
-            "type": "boolean"
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["fade"]
+              },
+              "from": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "to": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "length": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": ["type", "from", "to", "length"]
           }
-        },
-        "required": ["rgb"]
+        ]
       }
     }
   },

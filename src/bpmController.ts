@@ -15,7 +15,6 @@ const initializeBPMController = () => {
     const message = JSON.parse(evt.data.toString());
     if (message.op === "bpm") {
       taps.push(Date.now());
-      console.log("message");
       let ticks = [];
 
       if (taps.length >= 2) {
@@ -29,8 +28,6 @@ const initializeBPMController = () => {
       if (taps.length >= 24) {
         taps.shift();
       }
-
-      console.log(ticks);
 
       if (ticks.length >= 2) {
         let n = 0;

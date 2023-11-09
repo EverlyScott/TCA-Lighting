@@ -1,6 +1,15 @@
 import { Led } from "johnny-five";
 import GLOBALS from "./globals";
 import config from "./config.json";
+import { RGB } from "./types";
+
+function interpolate(color1: RGB, color2: RGB, percent: number): RGB {
+  const r = Math.round(color1[0] + (color2[0] - color1[0]) * percent);
+  const g = Math.round(color1[1] + (color2[1] - color1[1]) * percent);
+  const b = Math.round(color1[2] + (color2[2] - color1[2]) * percent);
+
+  return [r, g, b];
+}
 
 const initializeLights = () => {
   GLOBALS.LIGHTS_STOPPED = false;
@@ -20,18 +29,33 @@ const initializeLights = () => {
           for (let i = 0; i < GLOBALS.SET.program.length; i++) {
             const item = GLOBALS.SET.program[i];
 
-            if (GLOBALS.WSS) {
-              GLOBALS.WSS.clients.forEach((client) => {
-                client.send(
-                  JSON.stringify({
-                    op: "light-change",
-                    data: item.rgb,
-                  })
-                );
-              });
-            }
+            if (item.type === "solid") {
+              if (GLOBALS.WSS) {
+                GLOBALS.WSS.clients.forEach((client) => {
+                  client.send(
+                    JSON.stringify({
+                      op: "light-change",
+                      data: item.rgb,
+                    })
+                  );
+                });
+              }
 
-            await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
+              await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
+            } else {
+              for (let n = 0; n < item.length; n += 0.01) {
+                const currentColor = interpolate(item.from, item.to, n / item.length);
+                GLOBALS.WSS.clients.forEach((client) => {
+                  client.send(
+                    JSON.stringify({
+                      op: "light-change",
+                      data: currentColor,
+                    })
+                  );
+                });
+                await sleep(item.length * (60 / GLOBALS.BPM) * 10);
+              }
+            }
           }
         }
     })();
@@ -48,6 +72,19 @@ const initializeLights = () => {
 
     const setColor = (r: number, g: number, b: number) => {
       try {
+        try {
+          GLOBALS.WSS.clients.forEach((client) => {
+            client.send(
+              JSON.stringify({
+                op: "light-change",
+                data: [r, g, b],
+              })
+            );
+          });
+        } catch (err) {
+          console.error(err);
+        }
+
         redLed.off();
         greenLed.off();
         blueLed.off();
@@ -98,22 +135,18 @@ const initializeLights = () => {
       for (let i = 0; i < GLOBALS.SET.program.length; i++) {
         const item = GLOBALS.SET.program[i];
 
-        setColor(...item.rgb);
+        if (item.type === "solid") {
+          setColor(...item.rgb);
 
-        try {
-          GLOBALS.WSS.clients.forEach((client) => {
-            client.send(
-              JSON.stringify({
-                op: "light-change",
-                data: item.rgb,
-              })
-            );
-          });
-        } catch (err) {
-          console.error(err);
+          await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
+        } else {
+          for (let n = 0; n < item.length; n += 0.01) {
+            const currentColor = interpolate(item.from, item.to, n / item.length);
+            setColor(...currentColor);
+
+            await sleep(item.length * (60 / GLOBALS.BPM) * 10);
+          }
         }
-
-        await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
       }
     }
   });

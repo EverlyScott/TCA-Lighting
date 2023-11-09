@@ -13,8 +13,9 @@ import {
   Vex,
   Voice,
 } from "vexflow";
-import { Set } from "../types";
+import { ProgramItem, RGB, Set } from "../types";
 import { createCanvas, extractImage } from "node-vexflow";
+import { randomBytes } from "crypto";
 
 const generateNotation: RequestHandler = async (req, res) => {
   try {
@@ -36,7 +37,7 @@ const generateNotation: RequestHandler = async (req, res) => {
       [1 * 4]: "1",
     };
 
-    const generateNote = (length: number, color: [number, number, number]) => {
+    const generateNote = (length: number, noteToGenerate: ProgramItem) => {
       if (length > 0) {
         const noteType = noteConversions[length];
 
@@ -52,34 +53,53 @@ const generateNotation: RequestHandler = async (req, res) => {
             }
           }
 
-          const firstNote = generateNote(largestLength, color);
-          const secondNote = generateNote(length - largestLength, color);
+          const firstNote = generateNote(largestLength, noteToGenerate);
+          const secondNote = generateNote(length - largestLength, noteToGenerate);
 
           return [...firstNote, ...secondNote];
         }
 
-        const note = new StaveNote({
-          keys: ["b/4"],
-          duration: noteType + (color[0] === 0 && color[1] === 0 && color[2] === 0 ? "r" : ""),
-          dots: noteType.includes("d") ? 1 : 0,
-          stem_direction: Stem.DOWN,
-        });
+        if (noteToGenerate.type === "solid") {
+          const note = new StaveNote({
+            keys: ["b/4"],
+            duration:
+              noteType +
+              (noteToGenerate.rgb[0] === 0 && noteToGenerate.rgb[1] === 0 && noteToGenerate.rgb[2] === 0 ? "r" : ""),
+            dots: noteType.includes("d") ? 1 : 0,
+            stem_direction: Stem.DOWN,
+          });
 
-        note.setStyle(generateStyle(color));
+          note.setStyle(generateStyle(noteToGenerate.rgb));
 
-        return [noteType.includes("d") ? dotted(note) : note];
+          return [noteType.includes("d") ? dotted(note) : note];
+        } else if (noteToGenerate.type === "fade") {
+          const firstNote = generateNote(length / 2, { type: "solid", length: length / 2, rgb: noteToGenerate.from });
+
+          const secondNote = generateNote(length / 2, { type: "solid", length: length / 2, rgb: noteToGenerate.to });
+
+          ties.push(
+            new StaveTie({
+              first_note: firstNote[0],
+              first_indices: [0],
+              last_note: secondNote[secondNote.length - 1],
+              last_indices: [0],
+            }).setStyle(generateStyle([0, 0, 0]))
+          );
+
+          return [...firstNote, ...secondNote];
+        }
       } else {
         return [];
       }
     };
 
-    const generateStyle = (color: [number, number, number]) => {
+    const generateStyle = (rgb: RGB): ElementStyle => {
       return {
-        fillStyle: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-        strokeStyle: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+        fillStyle: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+        strokeStyle: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
         shadowColor: "#000000",
         shadowBlur: 1,
-      } as ElementStyle;
+      };
     };
 
     const dotted = (note: Note) => {
@@ -122,11 +142,11 @@ const generateNotation: RequestHandler = async (req, res) => {
       if (drawnBeats < 4 && drawnBeats + item.length > 4) {
         const firstNoteLength = 4 - drawnBeats;
 
-        const firstNote = generateNote(firstNoteLength, item.rgb);
+        const firstNote = generateNote(firstNoteLength, item);
 
         const secondNoteLength = item.length - firstNoteLength;
 
-        const secondNote = generateNote(secondNoteLength, item.rgb);
+        const secondNote = generateNote(secondNoteLength, item);
 
         drawnBeats = item.length - (4 - drawnBeats);
 
@@ -136,7 +156,7 @@ const generateNotation: RequestHandler = async (req, res) => {
             first_indices: [0],
             last_note: null, //secondNote[secondNote.length - 1],
             last_indices: [0],
-          }).setStyle(generateStyle(item.rgb))
+          }).setStyle(generateStyle(item.type === "solid" ? item.rgb : [0, 0, 0]))
         );
 
         ties.push(
@@ -145,7 +165,7 @@ const generateNotation: RequestHandler = async (req, res) => {
             first_indices: [0],
             last_note: secondNote[secondNote.length - 1],
             last_indices: [0],
-          }).setStyle(generateStyle(item.rgb))
+          }).setStyle(generateStyle(item.type === "solid" ? item.rgb : [0, 0, 0]))
         );
 
         return [...firstNote, new Vex.Flow.BarNote(), ...secondNote];
@@ -153,7 +173,7 @@ const generateNotation: RequestHandler = async (req, res) => {
 
       drawnBeats += item.length;
 
-      const note = generateNote(item.length, item.rgb);
+      const note = generateNote(item.length, item);
 
       if (drawnBeats >= 4) {
         drawnBeats = 0;
@@ -164,7 +184,7 @@ const generateNotation: RequestHandler = async (req, res) => {
     });
 
     if (drawnBeats !== 4) {
-      const rest = generateNote(4 - drawnBeats, [0, 0, 0]);
+      const rest = generateNote(4 - drawnBeats, { type: "solid", rgb: [0, 0, 0], length: 4 - drawnBeats });
 
       notes.push(...rest);
     }
