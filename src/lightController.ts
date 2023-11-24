@@ -3,6 +3,8 @@ import GLOBALS from "./globals";
 import config from "./config.json";
 import { RGB } from "./types";
 
+const FADE_MULTIPLIER = 0.03; // this seems to be the smoothest number while also not having too many issues with outdated queued commands causing a flash
+
 function interpolate(color1: RGB, color2: RGB, percent: number): RGB {
   const r = Math.round(color1[0] + (color2[0] - color1[0]) * percent);
   const g = Math.round(color1[1] + (color2[1] - color1[1]) * percent);
@@ -43,7 +45,7 @@ const initializeLights = () => {
 
               await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
             } else {
-              for (let n = 0; n < item.length; n += 0.02) {
+              for (let n = 0; n < item.length; n += FADE_MULTIPLIER) {
                 const currentColor = interpolate(item.from, item.to, n / item.length);
                 GLOBALS.WSS.clients.forEach((client) => {
                   client.send(
@@ -53,7 +55,7 @@ const initializeLights = () => {
                     })
                   );
                 });
-                await sleep(item.length * (60 / GLOBALS.BPM) * 2);
+                await sleep(item.length * (60 / GLOBALS.BPM) * (FADE_MULTIPLIER * 1000));
               }
             }
           }
@@ -140,11 +142,11 @@ const initializeLights = () => {
 
           await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
         } else {
-          for (let n = 0; n < item.length; n += 0.02) {
+          for (let n = 0; n < item.length; n += FADE_MULTIPLIER) {
             const currentColor = interpolate(item.from, item.to, n / item.length);
             setColor(...currentColor);
 
-            await sleep(item.length * (60 / GLOBALS.BPM) * 20);
+            await sleep(item.length * (60 / GLOBALS.BPM) * (FADE_MULTIPLIER * 1000));
           }
         }
       }
