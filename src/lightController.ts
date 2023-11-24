@@ -43,7 +43,7 @@ const initializeLights = () => {
 
               await sleep(item.length * (60 / GLOBALS.BPM) * 1000);
             } else {
-              for (let n = 0; n < item.length; n += 0.02) {
+              for (let n = 0; n < item.length; n += 0.005) {
                 const currentColor = interpolate(item.from, item.to, n / item.length);
                 GLOBALS.WSS.clients.forEach((client) => {
                   client.send(
@@ -53,7 +53,7 @@ const initializeLights = () => {
                     })
                   );
                 });
-                await sleep(item.length * (60 / GLOBALS.BPM) * 20);
+                await sleep(item.length * (60 / GLOBALS.BPM) * 5);
               }
             }
           }
