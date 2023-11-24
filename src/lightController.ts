@@ -87,13 +87,6 @@ const initializeLights = () => {
           console.error(err);
         }
 
-        redLed.off();
-        greenLed.off();
-        blueLed.off();
-        if (config.arduino.hasDedicatedWhite) {
-          whiteLed.off();
-        }
-
         if (config.arduino.hasDedicatedWhite && r === 255 && g === 255 && b === 255) {
           whiteLed.on();
         } else {
