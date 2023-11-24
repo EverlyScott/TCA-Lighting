@@ -35,7 +35,7 @@ const init = async () => {
 
   if (config.arduino.enabled) {
     console.log(`Initializing arduino on com port ${config.arduino.comPort}`);
-    GLOBALS.BOARD = new Board({ port: config.arduino.comPort });
+    GLOBALS.BOARD = new Board({ port: config.arduino.comPort, repl: false });
   } else {
     console.log("Arduino disabled; using fake object.");
     GLOBALS.BOARD = {
